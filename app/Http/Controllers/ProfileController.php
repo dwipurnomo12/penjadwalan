@@ -13,15 +13,35 @@ class ProfileController extends Controller
 {
     public function index()
     {
-        $userId = auth()->user()->id;
+        $user = auth()->user();
+        $profile = null;
+
+        if ($user->role->role == 'dosen') {
+            $profile = $user->dosen;
+        } elseif ($user->role->role == 'mahasiswa') {
+            $profile = $user->mahasiswa;
+        } elseif ($user->role->role == 'tata usaha') {
+            $profile = $user->tataUsaha;
+        }
+
         return view('profile.index', [
-            'profile'   => User::find($userId),
+            'profile' => $profile,
         ]);
     }
 
     public function update(Request $request)
     {
-        $profile = Auth::user();
+        $user = auth()->user();
+        $profile = null;
+
+        if ($user->role->role == 'dosen') {
+            $profile = $user->dosen;
+        } elseif ($user->role->role == 'mahasiswa') {
+            $profile = $user->mahasiswa;
+        } elseif ($user->role->role == 'tata usaha') {
+            $profile = $user->tataUsaha;
+        }
+
         $validator = Validator::make($request->all(), [
             'name'      => 'required',
             'email'     => 'required',
@@ -69,13 +89,17 @@ class ProfileController extends Controller
             $photo = 'photo-profile/' . $fileName;
         }
 
+        $user->update([
+            'username'  => $request->no_induk,
+            'password'  => $validated['password'] ?? $user->password
+        ]);
+
+
         $profile->update([
             'name'      => $request->name,
             'email'     => $request->email,
             'no_induk'  => $request->no_induk,
-            'username'  => $request->no_induk,
             'photo'     => $photo,
-            'password'  => $validated['password'] ?? $profile->password
         ]);
         return redirect()->back()->with('success', 'Berhasil memperbarui profil!');
     }

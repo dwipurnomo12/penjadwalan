@@ -23,10 +23,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/', [HomeController::class, 'index']);
     Route::get('/home', [HomeController::class, 'index'])->name('home');
 
-    Route::get('/dosen/filter-data', [DosenController::class, 'filterData']);
+    Route::post('/dosen/import', [DosenController::class, 'import'])->name('dosen.import');
     Route::resource('/dosen', DosenController::class);
 
-    Route::get('/mahasiswa/filter-data', [MahasiswaController::class, 'filterData']);
+    Route::post('/mahasiswa/import', [MahasiswaController::class, 'import'])->name('mahasiswa.import');
     Route::resource('/mahasiswa', MahasiswaController::class);
 
     Route::get('/profile', [ProfileController::class, 'index']);

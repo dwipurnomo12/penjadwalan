@@ -17,16 +17,7 @@ class User extends Authenticatable
      *
      * @var array<int, string>
      */
-    protected $fillable = [
-        'name',
-        'email',
-        'username',
-        'password',
-        'role_id',
-        'prodi_id',
-        'photo',
-        'no_induk'
-    ];
+    protected $guarded = ['id'];
 
     /**
      * The attributes that should be hidden for serialization.
@@ -54,9 +45,18 @@ class User extends Authenticatable
         return $this->belongsTo(Role::class);
     }
 
-    //Tabel user berelasi one to one dengan tabel prodi
-    public function prodi()
+    public function dosen()
     {
-        return $this->belongsTo(ProgramStudi::class, 'prodi_id');
+        return $this->hasOne(Dosen::class);
+    }
+
+    public function mahasiswa()
+    {
+        return $this->hasOne(Mahasiswa::class);
+    }
+
+    public function tataUsaha()
+    {
+        return $this->hasOne(TataUsaha::class);
     }
 }

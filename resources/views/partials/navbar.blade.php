@@ -9,13 +9,50 @@
               <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown"
                   aria-haspopup="true" aria-expanded="false">
                   @if (auth()->user()->photo)
-                      <img class="img-profile rounded-circle" src="{{ asset('storage/' . auth()->user()->photo) }}"
-                          style="max-width: 60px">
-                  @else
                       <img class="img-profile rounded-circle" src="/assets/img/profil.png" style="max-width: 60px">
+                  @else
+                      @if (auth()->user()->role->role == 'tata usaha')
+                          @if (auth()->user()->tataUsaha->photo)
+                              <img class="img-profile rounded-circle"
+                                  src="{{ asset('storage/' . auth()->user()->tataUsaha->photo) }}"
+                                  style="max-width: 60px">
+                          @else
+                              <img class="img-profile rounded-circle" src="/assets/img/profil.png"
+                                  style="max-width: 60px">
+                          @endif
+                      @elseif (auth()->user()->role->role == 'dosen')
+                          @if (auth()->user()->dosen->photo)
+                              <img class="img-profile rounded-circle"
+                                  src="{{ asset('storage/' . auth()->user()->dosen->photo) }}" style="max-width: 60px">
+                          @else
+                              <img class="img-profile rounded-circle" src="/assets/img/profil.png"
+                                  style="max-width: 60px">
+                          @endif
+                      @elseif (auth()->user()->role->role == 'mahasiswa')
+                          @if (auth()->user()->mahasiswa->photo)
+                              <img class="img-profile rounded-circle"
+                                  src="{{ asset('storage/' . auth()->user()->mahasiswa->photo) }}"
+                                  style="max-width: 60px">
+                          @else
+                              <img class="img-profile rounded-circle" src="/assets/img/profil.png"
+                                  style="max-width: 60px">
+                          @endif
+                      @endif
                   @endif
-                  <span class="ml-2 d-none d-lg-inline text-white small">{{ auth()->user()->name }} -
-                      {{ auth()->user()->role->role }}</span>
+
+                  <span class="ml-2 d-none d-lg-inline text-white small">
+                      @if (auth()->check())
+                          @if (auth()->user()->tataUsaha)
+                              {{ auth()->user()->tataUsaha->name }}
+                          @elseif(auth()->user()->dosen)
+                              {{ auth()->user()->dosen->name }}
+                          @elseif(auth()->user()->mahasiswa)
+                              {{ auth()->user()->mahasiswa->name }}
+                          @endif
+                      @endif
+                      -
+                      {{ auth()->user()->role->role }}
+                  </span>
               </a>
               <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="userDropdown">
                   <a class="dropdown-item" href="/profile">

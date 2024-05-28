@@ -18,48 +18,51 @@
     @endif
 
     <div class="card">
+        <div class="modal fade" id="importDataMahasiswa" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+            aria-hidden="true" data-backdrop="static">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Import Data Mahasiswa</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <form action="{{ route('mahasiswa.import') }}" method="post" enctype="multipart/form-data">
+                        <div class="modal-body">
+                            @csrf
+                            <div class="form-group">
+                                <label for="file">Pilih file Excel</label>
+                                <input type="file" name="file" class="form-control" accept=".xlsx, .xls">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <a href="{{ asset('storage/excel/data_mahasiswa.xlsx') }}"
+                                class="btn btn-sm btn-success float-start" download="format_excel_mahasiswa.xlsx">
+                                Unduh Format .xlsx
+                            </a>
+
+                            <button type="submit" class="btn btn-sm btn-primary">Import</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
         <div class="card-header bg-primary text-white">
             <div class="row">
                 <div class="col-6">
                     Data Mahasiswa
                 </div>
                 <div class="col-6">
-                    <a href="/mahasiswa/create" class="btn btn-warning float-right">Tambah Data</a>
+                    <a href="/mahasiswa/create" class="btn btn-warning float-right m-1"><i class="fa fa-plus"></i> Data</a>
+                    <button type="button" class="btn btn-success float-right m-1" data-toggle="modal"
+                        data-target="#importDataMahasiswa">
+                        Import <i class="fa fa-file-excel"></i>
+                    </button>
                 </div>
             </div>
         </div>
         <div class="card-body">
-            <div class="form-group">
-                <form action="/mahasiswa/filter-data" method="GET">
-                    <div class="row">
-                        <div class="col">
-                            <div class="form-group">
-                                <label for="text">Filter Berdasarkan Prodi</label>
-                                <div class="input-group">
-                                    <select class="form-control" aria-label="Default select example" name="prodi_id">
-                                        <option value="">Pilih Prodi</option>
-                                        @foreach ($prodis as $prodi)
-                                            <option value="{{ $prodi->id }}"
-                                                {{ request('prodi_id') == $prodi->id ? 'selected' : '' }}>
-                                                {{ $prodi->prodi }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    <div class="ml-2 mt-1">
-                                        <button type="submit" class="btn btn-sm btn-primary"><i
-                                                class="fa-solid fa-magnifying-glass"></i> Filter</button>
-
-                                        <a href="/mahasiswa/" class="btn btn-sm btn-danger ml-1" id="refresh_btn"><i
-                                                class="fa fa-solid fa-rotate-right"></i>
-                                            Refresh</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </form>
-            </div>
-
             <div class="table-responsive">
                 <table id="table_id" class="table table-bordered table-hover table-striped table-condensed">
                     <thead>
@@ -69,35 +72,37 @@
                             <th class="text-left">Nama</th>
                             <th class="text-left">NIM</th>
                             <th class="text-left">Program Studi</th>
+                            <th class="text-left">Angkatan</th>
                             <th class="text-left">Opsi</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($mahasiswas as $mahasiswa)
+                        @foreach ($users as $user)
                             <tr>
                                 <td class="text-left">{{ $loop->iteration }}</td>
                                 <td class="text-left">
-                                    @if ($mahasiswa->photo)
+                                    @if ($user->mahasiswa->photo)
                                         <img class="img-profile rounded-circle"
-                                            src="{{ asset('storage/' . $mahasiswa->photo) }}" alt="Photo"
+                                            src="{{ asset('storage/' . $user->mahasiswa->photo) }}" alt="Photo"
                                             style="max-width: 50px">
                                     @else
                                         <img class="img-profile rounded-circle" src="/assets/img/profil.png" alt="Photo"
                                             style="max-width: 50px">
                                     @endif
                                 </td>
-                                <td class="text-left">{{ $mahasiswa->name }}</td>
-                                <td class="text-left">{{ $mahasiswa->no_induk }}</td>
-                                <td class="text-left">{{ $mahasiswa->prodi->prodi }}</td>
+                                <td class="text-left">{{ $user->mahasiswa->name }}</td>
+                                <td class="text-left">{{ $user->mahasiswa->no_induk }}</td>
+                                <td class="text-left">{{ $user->mahasiswa->prodi->prodi }}</td>
+                                <td class="text-left">{{ $user->mahasiswa->thn_angkatan }}</td>
                                 <td>
-                                    <a href="/mahasiswa/{{ $mahasiswa->id }}/edit" class="btn btn-warning m-1"><i
+                                    <a href="/mahasiswa/{{ $user->id }}/edit" class="btn btn-warning m-1"><i
                                             class="fa fa-pencil-square"></i></a>
-                                    <form id="{{ $mahasiswa->id }}" action="/mahasiswa/{{ $mahasiswa->id }}"
-                                        method="POST" class="d-inline">
+                                    <form id="{{ $user->id }}" action="/mahasiswa/{{ $user->id }}" method="POST"
+                                        class="d-inline">
                                         @method('delete')
                                         @csrf
                                         <button type="submit" class="btn btn-danger m-1 swal-confirm"
-                                            data-form="{{ $mahasiswa->id }}"><i class="fa fa-trash"></i></a></button>
+                                            data-form="{{ $user->id }}"><i class="fa fa-trash"></i></a></button>
                                     </form>
                                 </td>
                             </tr>

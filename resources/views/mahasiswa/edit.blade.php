@@ -21,15 +21,15 @@
             </div>
         </div>
         <div class="card-body">
-            <form action="/mahasiswa/{{ $mahasiswa->id }}" method="POST" enctype="multipart/form-data">
+            <form action="/mahasiswa/{{ $user->id }}" method="POST" enctype="multipart/form-data">
                 @method('put')
                 @csrf
                 <div class="row">
                     <div class="col-md-4">
                         <div class="form-group">
                             <label for="photo">Photo Profil</label><br>
-                            @if ($mahasiswa->photo)
-                                <img src="{{ $mahasiswa->photo ? asset('storage/' . $mahasiswa->photo) : '' }}"
+                            @if ($user->mahasiswa->photo)
+                                <img src="{{ $user->mahasiswa->photo ? asset('storage/' . $user->mahasiswa->photo) : '' }}"
                                     class="img-preview img-fluid mb-3 mt-2" id="preview"
                                     style="max-height: 250px; overflow:hidden; border: 1px solid black;">
                             @else
@@ -48,7 +48,7 @@
                         <div class="form-group">
                             <label for="name">Nama mahasiswa <span style="color: red">*</span></label>
                             <input type="text" class="form-control" name="name"
-                                value="{{ old('name', $mahasiswa->name) }}">
+                                value="{{ old('name', $user->mahasiswa->name) }}">
                             @error('name')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
@@ -56,7 +56,7 @@
                         <div class="form-group">
                             <label for="name">Email <span style="color: red">*</span></label>
                             <input type="email" class="form-control" name="email"
-                                value="{{ old('email', $mahasiswa->email) }}">
+                                value="{{ old('email', $user->mahasiswa->email) }}">
                             @error('email')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
@@ -64,7 +64,7 @@
                         <div class="form-group">
                             <label for="no_induk">NIDN <span style="color: red">*</span></label>
                             <input type="number" class="form-control" name="no_induk"
-                                value="{{ old('no_induk', $mahasiswa->no_induk) }}">
+                                value="{{ old('no_induk', $user->mahasiswa->no_induk) }}">
                             @error('no_induk')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
@@ -74,12 +74,20 @@
                             <select name="prodi_id" id="prodi_id" class="form-control">
                                 <option value="">Pilih Program Studi</option>
                                 @foreach ($prodis as $prodi)
-                                    <option value="{{ $prodi->id }}" @if ($mahasiswa->prodi_id == $prodi->id) selected @endif>
+                                    <option value="{{ $prodi->id }}" @if ($user->mahasiswa->prodi_id == $prodi->id) selected @endif>
                                         {{ $prodi->prodi }}
                                     </option>
                                 @endforeach
                             </select>
                             @error('prodi_id')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="form-group">
+                            <label for="thn_angkatan">Tahun Angkatan <span style="color: red">*</span></label>
+                            <input type="number" class="form-control" name="thn_angkatan"
+                                value="{{ old('thn_angkatan', $user->mahasiswa->thn_angkatan) }}">
+                            @error('thn_angkatan')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
                         </div>

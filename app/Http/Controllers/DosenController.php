@@ -3,8 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Dosen;
 use App\Models\ProgramStudi;
 use Illuminate\Http\Request;
+use App\Imports\DosensImport;
+use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
@@ -15,26 +20,22 @@ class DosenController extends Controller
      */
     public function index()
     {
+        $prodiId = auth()->user()->tataUsaha->prodi->id;
+
+        $users = User::where('role_id', 2)
+            ->whereHas('dosen', function ($query) use ($prodiId) {
+                $query->where('prodi_id', $prodiId);
+            })
+            ->orderBy('id', 'DESC')
+            ->get();
+        $prodis = ProgramStudi::all();
+
         return view('dosen.index', [
-            'dosens'    => User::where('role_id', '2')
-                ->where('prodi_id', auth()->user()->prodi->id)
-                ->orderBy('id', 'DESC')
-                ->get(),
-            'prodis'    => ProgramStudi::all()
+            'users'     => $users,
+            'prodis'    => $prodis
         ]);
     }
 
-    public function filterData(Request $request)
-    {
-        $prodiId    = $request->input('prodi_id');
-        $prodis     = ProgramStudi::all();
-
-        $dosens = User::where('role_id', '2')->when($prodiId, function ($query, $prodiId) {
-            return $query->where('prodi_id', $prodiId);
-        })->get();
-
-        return view('dosen.index', compact('dosens', 'prodis'));
-    }
 
     /**
      * Show the form for creating a new resource.
@@ -54,8 +55,8 @@ class DosenController extends Controller
         $validator = Validator::make($request->all(), [
             'photo'     => 'mimes:png,jpg,jpeg',
             'name'      => 'required',
-            'email'     => 'required|unique:users',
-            'no_induk'  => 'required|unique:users',
+            'email'     => 'required|unique:dosens',
+            'no_induk'  => 'required|unique:dosens',
             'prodi_id'  => 'required'
         ], [
             'photo.mimes'           => 'Format photo yang diijinkan adalah png, jpg, jpeg',
@@ -79,13 +80,17 @@ class DosenController extends Controller
             $photo = 'photo-profile/' . $fileName;
         }
 
-        User::create([
+        $user = User::create([
+            'username'      => $request->no_induk,
+            'role_id'       => 2,
+        ]);
+
+        Dosen::create([
+            'user_id'       => $user->id,
             'name'          => $request->name,
             'email'         => $request->email,
-            'username'      => $request->no_induk,
             'no_induk'      => $request->no_induk,
             'prodi_id'      => $request->prodi_id,
-            'role_id'       => 2,
             'photo'         => $photo,
         ]);
 
@@ -97,9 +102,9 @@ class DosenController extends Controller
      */
     public function edit(string $id)
     {
-        $dosen = User::where('role_id', 2)->findOrFail($id);
+        $user = User::findOrFail($id);
         return view('dosen.edit', [
-            'dosen'     => $dosen,
+            'user'      => $user,
             'prodis'    => ProgramStudi::all()
         ]);
     }
@@ -109,23 +114,24 @@ class DosenController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $dosen = User::where('role_id', 2)->findOrFail($id);
+        $user = User::findOrFail($id);
+        $dosen = $user->dosen;
 
         $validator = Validator::make($request->all(), [
-            'photo'     => 'mimes:png,jpg,jpeg',
+            'photo'     => 'nullable|mimes:png,jpg,jpeg',
             'name'      => 'required',
-            'email'     => 'required|unique:users,email,' . $dosen->id,
-            'no_induk'  => 'required|unique:users,no_induk,' . $dosen->id,
+            'email'     => 'required|unique:dosens,email,' . $dosen->id,
+            'no_induk'  => 'required|unique:dosens,no_induk,' . $dosen->id,
             'prodi_id'  => 'required',
             'password'  => 'nullable|min:4',
-            'photo.mimes'           => 'Format photo yang diijinkan adalah png, jpg, jpeg',
-            'name.required'         => 'Wajib diisi !',
-            'email.required'        => 'Wajib diisi !',
-            'email.unique'          => 'Email sudah terdaftar',
-            'no_induk.required'     => 'Wajib diisi !',
-            'no_induk.unique'       => 'No induk dosen sudah terdaftar',
-            'prodi_id.required'     => 'Pilih Prodi !',
-            'password.min'          => 'Password minimal 6 karakter',
+            'photo.mimes' => 'Format photo yang diijinkan adalah png, jpg, jpeg',
+            'name.required' => 'Wajib diisi !',
+            'email.required' => 'Wajib diisi !',
+            'email.unique' => 'Email sudah terdaftar',
+            'no_induk.required' => 'Wajib diisi !',
+            'no_induk.unique' => 'No induk dosen sudah terdaftar',
+            'prodi_id.required' => 'Pilih Prodi !',
+            'password.min' => 'Password minimal 4 karakter',
         ]);
 
         if ($validator->fails()) {
@@ -140,37 +146,36 @@ class DosenController extends Controller
 
             $file = $request->file('photo');
             $fileName = $file->getClientOriginalName();
-            Storage::disk('public')->put('photo-profile/' . $fileName, file_get_contents($file));
+            $file->storeAs('public/photo-profile', $fileName);
             $photo = 'photo-profile/' . $fileName;
         }
 
         if ($request->filled('password')) {
-            $dosen->password = bcrypt($request->password);
+            $user->password = bcrypt($request->password);
+            $user->save();
         }
 
-        $dosen->update([
-            'name'          => $request->name,
-            'email'         => $request->email,
-            'username'      => $request->no_induk,
-            'no_induk'      => $request->no_induk,
-            'prodi_id'      => $request->prodi_id,
-            'photo'         => $photo,
+        $user->update([
+            'username' => $request->no_induk,
         ]);
 
-        if ($request->filled('password')) {
-            $dosen->save();
-        }
+        $dosen->update([
+            'name' => $request->name,
+            'email' => $request->email,
+            'no_induk' => $request->no_induk,
+            'prodi_id' => $request->prodi_id,
+            'photo' => $photo,
+        ]);
 
         return redirect('/dosen')->with('success', 'Data berhasil diupdate !');
     }
-
 
     /**
      * Remove the specified resource from storage.
      */
     public function destroy(string $id)
     {
-        $dosen = User::where('role_id', 2)->findOrFail($id);
+        $dosen = User::with('dosen')->where('role_id', 2)->findOrFail($id);
 
         if ($dosen->photo && Storage::disk('public')->exists($dosen->photo)) {
             Storage::disk('public')->delete($dosen->photo);
@@ -178,5 +183,20 @@ class DosenController extends Controller
         $dosen->delete();
 
         return redirect()->back()->with('success', 'Data berhasil dihapus');
+    }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file'  => 'required|file|mimes:xlsx,xls'
+        ], [
+            'file.required'     => 'Tidak boleh kosong !',
+            'file.file'         => 'Harus ber-type file !',
+            'file.mimes'        => 'Format yang di izinkan xlsx, xls'
+        ]);
+
+        $file = $request->file('file');
+        Excel::import(new DosensImport, $file);
+        return redirect('/dosen')->with('success', 'Data berhasil diimpor!');
     }
 }
